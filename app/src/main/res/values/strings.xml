@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">RealCv</string>
+
+    <!-- main -->
+    <string name="get_start">Get Start</string>
+    <string name="HelloToday">How Are You</string>
+
+    <!-- face -->
+    <string name="faceView">face View</string>
+    <string name="BackButton">Back</string>
+    <string name="ChooseButton">Choose</string>
+    <string name="ScanButton">Scan</string>
+</resources>

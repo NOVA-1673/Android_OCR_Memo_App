@@ -1,0 +1,28 @@
+# Gradle / Build
+.gradle/
+**/build/
+.cxx/
+.externalNativeBuild/
+
+# IDE
+*.iml
+.idea/caches/
+.idea/libraries/
+.idea/shelf/
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+# (공유하고 싶으면 유지 가능: .idea/codeStyles/ , .idea/inspectionProfiles/)
+
+# Android
+local.properties
+captures/
+*.apk
+*.aab
+*.ap_
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db
