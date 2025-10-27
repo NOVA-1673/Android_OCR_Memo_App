@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 
+import com.ex.realcv.MemoMain.MemoBase;
 import com.ex.realcv.TodoMain.TodoAct;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         findViewById(R.id.btnGetStart).setOnClickListener(v -> {
-            startActivity(new Intent(this, TodoAct.class));
+            startActivity(new Intent(this, MemoBase.class));
         });
       //  ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
       //      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

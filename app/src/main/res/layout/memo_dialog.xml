@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:padding="0dp"
+    android:descendantFocusability="afterDescendants">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="0dp"
+        app:cardCornerRadius="24dp"
+        app:cardUseCompatPadding="true"
+        app:cardElevation="8dp">
+
+        <!-- 완전 빈 팝업을 원하면 이 EditText를 지워도 됨 -->
+        <EditText
+            android:id="@+id/etMemo"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="4"
+            android:padding="16dp"
+            android:gravity="top|start"
+            android:background="@null"
+            android:hint="type your memo..."
+                        >
+        <requestFocus/>
+        </EditText>
+
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

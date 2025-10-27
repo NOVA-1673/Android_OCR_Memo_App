@@ -25,6 +25,8 @@
         </activity>
         <activity android:name=".FaceActivity"/>
         <activity android:name=".TodoMain.TodoAct"/>
+        <activity android:name=".MemoMain.MemoBase"
+            android:windowSoftInputMode="stateUnchanged|adjustResize"/>
     </application>
 
     <!--Permissions -->

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+
+    <!-- 🔹 L1: Detail (현재 리스트) -->
+    <!--<com.google.android.material.card.MaterialCardView
+        android:id="@+id/panelList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="72dp"
+        android:layout_marginEnd="23dp"
+        android:layout_marginBottom="24dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:visibility="visible"
+        app:cardCornerRadius="20dp"
+        app:cardUseCompatPadding="true">-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMemo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="16dp"
+            android:visibility="visible"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <!--</com.google.android.material.card.MaterialCardView>-->
+
+    <!-- 좌하단 버튼스택 -->
+    <LinearLayout
+        android:id="@+id/leftButtonStack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp">
+
+        <!-- 위: ChangeLayer (레이어 전환 테스트) -->
+        <ImageButton
+            android:id="@+id/ChangeLayer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="change_layer"
+            android:padding="8dp"
+            android:rotationY="181"
+            app:srcCompat="@drawable/ic_auto_delete"
+            app:tint="@android:color/black" />
+
+        <!-- 아래: 기존 ChangeDomain -->
+        <ImageButton
+            android:id="@+id/ChangeDomain"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="change_domain"
+            android:padding="8dp"
+            app:srcCompat="@drawable/ic_changedomain"
+            app:tint="@android:color/black" />
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="add"
+        app:srcCompat="@drawable/ic_add"
+        app:backgroundTint="@color/white"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
