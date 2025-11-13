@@ -2,6 +2,8 @@ package com.ex.realcv.MemoMain;
 
 import android.content.Context;
 import android.util.Log;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -73,6 +75,10 @@ public class MemoDialog extends DialogFragment {
     @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
         // 뷰가 붙고 난 뒤 프레임에서 포커스 + 키보드
+        View scrim = v.findViewById(R.id.scrim);
+        setCancelable(true);
+        scrim.setOnClickListener(view -> dismiss());
+
         et.post(() -> {
             et.requestFocus();
             showKeyboard();
@@ -83,12 +89,39 @@ public class MemoDialog extends DialogFragment {
         super.onStart();
         Dialog d = getDialog();
         if (d != null && d.getWindow() != null) {
-            DisplayMetrics dm = new DisplayMetrics();
-            d.getWindow().getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+           // d.getWindow().getWindowManager().getDefaultDisplay().getMetrics(dm);
+            d.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+
+            /*DisplayMetrics dm = new DisplayMetrics();
             int w = (int) (dm.widthPixels * 0.86f);       // 가로 86%
             int h = ViewGroup.LayoutParams.WRAP_CONTENT;  // 세로는 내용만큼
             d.getWindow().setLayout(w, h);
-            d.getWindow().setGravity(Gravity.CENTER);
+            d.getWindow().setGravity(Gravity.CENTER);*/
+            DisplayMetrics dm = new DisplayMetrics();
+            d.getWindow().getWindowManager().getDefaultDisplay().getMetrics(dm);
+            int cardWidth = (int)(dm.widthPixels * 0.86f);
+
+            View root = requireView();
+            View card = root.findViewById(R.id.memoCard); // XML에서 카드 id 지정 필요
+            if (card != null) {
+                ViewGroup.LayoutParams lp = card.getLayoutParams();
+                lp.width = cardWidth;
+                card.setLayoutParams(lp);
+            }
+
+            //안드로이드 ui 제거 현재 sdk 11이상만 되게
+            WindowInsetsController controller = d.getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                );
+            }
+            
         }
     }
 
@@ -96,6 +129,7 @@ public class MemoDialog extends DialogFragment {
     @Override public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         if (listener != null) {
+
             String text = (et != null) ? et.getText().toString().trim() : "";
             listener.onSave(text); // 비어있으면 무시하도록 호출 측에서 판단
 

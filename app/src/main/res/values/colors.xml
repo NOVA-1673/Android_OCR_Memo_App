@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 메모 카드 배경색 -->
+    <color name="memo_bg_normal">#FFFFFFFF</color>   <!-- 일반 모드: 흰색 -->
+    <color name="memo_bg_trash">#FFFFF2F2</color>    <!-- 휴지통 모드: 연한 붉은색 -->
+
 </resources>

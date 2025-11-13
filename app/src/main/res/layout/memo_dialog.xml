@@ -1,34 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="wrap_content"
-    android:padding="0dp"
-    android:descendantFocusability="afterDescendants">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrim"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    android:clickable="true">
 
+    <!-- 메모 카드 -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/memoCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="0dp"
+        android:layout_gravity="center"
+        android:layout_margin="24dp"
         app:cardCornerRadius="24dp"
         app:cardUseCompatPadding="true"
         app:cardElevation="8dp">
 
-        <!-- 완전 빈 팝업을 원하면 이 EditText를 지워도 됨 -->
         <EditText
             android:id="@+id/etMemo"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minLines="4"
-            android:padding="16dp"
+            android:background="#FFFFFF"
             android:gravity="top|start"
-            android:background="@null"
             android:hint="type your memo..."
-                        >
-        <requestFocus/>
-        </EditText>
-
+            android:imeOptions="flagNoEnterAction"
+            android:inputType="textMultiLine|textCapSentences"
+            android:minLines="8"
+            android:padding="16dp"
+            android:scrollbars="vertical"
+            tools:visibility="invisible" />
+        <!-- 블록 편집기 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvBlocks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:background="#FFFFFF"
+            android:clipToPadding="false"/>
     </com.google.android.material.card.MaterialCardView>
-</FrameLayout>
+
+    <!-- 카드에 '앵커'된 버튼: 카드의 bottom|end 에 붙음 -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnTodo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="0dp"
+
+        android:layout_marginBottom="0dp"
+        android:translationX="-39.5dp"
+
+        android:translationY="14dp"
+        app:layout_anchor="@id/memoCard"
+
+        app:layout_anchorGravity="bottom|end"
+        app:tint="@android:color/white" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
