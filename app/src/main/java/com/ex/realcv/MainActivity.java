@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 
+import com.ex.realcv.Camera.CameraMain;
 import com.ex.realcv.MemoMain.MemoBase;
 import com.ex.realcv.TodoMain.TodoAct;
 
@@ -42,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btnGetStart).setOnClickListener(v -> {
             startActivity(new Intent(this, MemoBase.class));
+        });
+
+        findViewById(R.id.btnCapture).setOnClickListener(v -> {
+            startActivity(new Intent(this, CameraMain.class));
         });
       //  ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
       //      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

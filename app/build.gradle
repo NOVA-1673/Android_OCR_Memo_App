@@ -50,4 +50,12 @@ dependencies {
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}" // PreviewView
+
+    // ML Kit Text Recognition (일본어)
+    implementation 'com.google.mlkit:text-recognition-japanese:16.0.0'
+
+    // OkHttp (Papago 테스트용 간단 HTTP)
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+
 }
