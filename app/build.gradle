@@ -51,6 +51,11 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}" // PreviewView
 
+    //RoomDB
+    def room_version = "2.6.1"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+
     // ML Kit Text Recognition (일본어)
     implementation 'com.google.mlkit:text-recognition-japanese:16.0.0'
 
