@@ -4,8 +4,10 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -19,6 +21,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.ex.realcv.R;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -69,6 +72,7 @@ public class CameraMain extends AppCompatActivity {
 
                 imageCapture = new ImageCapture.Builder()
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                        .setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
                         .build();
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
@@ -101,10 +105,25 @@ public class CameraMain extends AppCompatActivity {
                     public void onImageSaved(
                             @NonNull ImageCapture.OutputFileResults outputFileResults) {
                         // 저장된 파일을 ImageView에 표시 (간단 테스트용)
-                        Bitmap bitmap = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+                        //Bitmap bitmap = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+                       // Bitmap bitmap = rotateBitmapIfNeeded(photoFile.getAbsolutePath());
+                        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.japan1);
+
                         ivResult.setImageBitmap(bitmap);
 
                         // 나중에 여기서 OCR 호출할 수 있음
+                        OCR_Utility.runOcr(bitmap, new OCR_Utility.Callback() {
+                            @Override
+                            public void onSuccess(String text) {
+                                Log.d("OCR", "인식 결과 : " + text);
+
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Log.e("OCR", "실패", e);
+                            }
+                        });
                         // runOcrOnBitmap(bitmap);
                     }
 
@@ -113,6 +132,60 @@ public class CameraMain extends AppCompatActivity {
                         exception.printStackTrace();
                     }
                 });
+    }
+
+    private Bitmap rotateBitmapIfNeeded(String path) {
+        Bitmap bitmap = BitmapFactory.decodeFile(path);
+
+        try {
+            ExifInterface exif = new ExifInterface(path);
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+            );
+
+            Matrix matrix = new Matrix();
+
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+                default:
+                    return bitmap; // 회전 필요 없음
+            }
+
+            return Bitmap.createBitmap(
+                    bitmap, 0, 0,
+                    bitmap.getWidth(),
+                    bitmap.getHeight(),
+                    matrix,
+                    true
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return bitmap;
+        }
+    }
+
+    private Bitmap rotateBitmap(Bitmap bitmap, float degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+
+        return Bitmap.createBitmap(
+                bitmap,
+                0, 0,
+                bitmap.getWidth(),
+                bitmap.getHeight(),
+                matrix,
+                true
+        );
     }
 
 
