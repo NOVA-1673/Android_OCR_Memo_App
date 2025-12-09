@@ -1,6 +1,6 @@
 package com.ex.realcv.Camera;
 
-public interface TranslaterService {
+public interface TranslatorService {
 
     interface Callback {
         void onSuccess(String translated);
@@ -8,6 +8,8 @@ public interface TranslaterService {
     }
 
     void translate(String text, Callback callback);
+
+    void translateByLines(String ocrText, Callback callback);
     void close();   // ML Kit 같은 경우 model 해제용
 
 }

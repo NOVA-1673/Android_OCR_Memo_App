@@ -53,6 +53,7 @@ dependencies {
 
     // ML Kit Text Recognition (일본어)
     implementation 'com.google.mlkit:text-recognition-japanese:16.0.0'
+    implementation "com.google.mlkit:translate:17.0.2"
 
     // OkHttp (Papago 테스트용 간단 HTTP)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

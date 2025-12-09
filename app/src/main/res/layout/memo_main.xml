@@ -44,13 +44,20 @@
         android:orientation="vertical"
         android:layout_gravity="bottom|start"
         android:layout_margin="16dp">
-
+        <ImageButton
+            android:id="@+id/BackToMain"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="BackToMain"
+            android:padding="8dp"
+            app:srcCompat="@drawable/backarrow"
+            app:tint="@android:color/black" />
         <!-- 위: ChangeLayer (레이어 전환 테스트) -->
         <ImageButton
             android:id="@+id/ChangeLayer"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginBottom="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="change_layer"
             android:padding="8dp"

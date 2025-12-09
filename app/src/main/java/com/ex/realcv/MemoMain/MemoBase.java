@@ -242,6 +242,10 @@ public class MemoBase extends MainActivity {
         findViewById(R.id.ChangeDomain).setOnClickListener(v -> {
             startActivity(new Intent(this, TodoAct.class));
         });
+
+        findViewById(R.id.BackToMain).setOnClickListener(v -> {
+            startActivity(new Intent(this, MainActivity.class));
+        });
         
         //휴지통 관련
 
