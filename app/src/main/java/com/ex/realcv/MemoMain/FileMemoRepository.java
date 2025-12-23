@@ -19,7 +19,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileMemoRepository implements RepositoryFunc{
+public abstract class FileMemoRepository implements RepositoryFunc{
+
+
 
 
     private static final String TAG = "FileMemoRepository";
@@ -241,10 +243,45 @@ public class FileMemoRepository implements RepositoryFunc{
         cache.set(entry.index, new Memo(entry.memo.getId(), entry.memo.text, done));
     }
 
+    @Override
+    public void addBlocks(ArrayList<BlockMemo> blocks, Callback<Void> cb) {
+
+    }
+
+    @Override
+    public void loadBlocks(String id, Callback<ArrayList<BlockMemo>> cb) {
+
+    }
+
+    @Override
+    public void updateBlocks(String id, ArrayList<BlockMemo> blocks, Callback<Void> cb) {
+
+    }
+
     @Override public void delete(String id) {
         List<Memo> list = load();
         list.removeIf(x -> x.id.equals(id));
         diskIO.execute(this::persist);
+    }
+
+    @Override
+    public void activeMemo(Callback<List<Memo>> cb) {
+
+    }
+
+    @Override
+    public void softDeletedMemo(Callback<List<Memo>> cb) {
+
+    }
+
+    @Override
+    public void softDelete(String id, Callback<Void> cb) {
+
+    }
+
+    @Override
+    public void hardDelete(String id, Callback<Void> cb) {
+
     }
 
     // ====== [A] 문자열에 블록 JSON을 래핑/언래핑하기 위한 포맷 ======

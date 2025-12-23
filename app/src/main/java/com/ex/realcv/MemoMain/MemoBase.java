@@ -66,7 +66,8 @@ public class MemoBase extends MainActivity {
     private MemoAdapter adapter;
     private BlocksAdapter BlockAdapter;
 
-    private FileMemoRepository repo;
+    private RepositoryFunc repo;
+    private RoomMemoRepository RoomRepo;
     private final Gson gson = new Gson();
     private static final String KEY = "memos_json";
     private static final String TAG = "MemoBase";
@@ -105,7 +106,8 @@ public class MemoBase extends MainActivity {
         rv.setLayoutManager(lm);
 
         //저장소
-        repo = new FileMemoRepository(getApplicationContext());
+        //repo = new FileMemoRepository(getApplicationContext());
+        repo = new RoomMemoRepository((getApplicationContext()));
 
         //스와이프 삭제 초기 설정
         swipeHelperMode = setTouchHelper(1);
@@ -124,72 +126,58 @@ public class MemoBase extends MainActivity {
         adapter = new MemoAdapter(new MemoAdapter.Listener() {
             @Override public void onToggleDone(Memo m, boolean checked) {
                 if (showingTrash) {
-                    // 휴지통 모드: 팝업 띄우고 확인 시 복구
                     showRestoreConfirmDialog(MemoBase.this, m.getId());
                     return;
                 }
-                io.execute(() -> {
-                    if (showingTrash) {
-                        // 🗑 휴지통 모드일 때 → 복구
-                        repo.restore(m.getId());
-                    } else {
-                        // ✅ 일반 모드일 때 → 완료/미완료 토글
-                        repo.toggleDone(m.getId(), checked);
-                    }         // 미세 동작
-                   // List<Memo> fresh = repo.activeMemo();     // 캐시에서 조회(필터/정렬 포함)
-                    //runOnUiThread(() -> submitSafely(fresh));
-                    List<Memo> fresh = showingTrash
-                            ? repo.softDeletedMemo()
-                            : repo.activeMemo();
-                    submitSafely(fresh);
-                });
+
+                if (showingTrash) {
+                    repo.restore(m.getId(), unused -> {
+                        // 4) 저장 끝나면 리스트 갱신
+                        refreshList();
+                    });        // repo 내부에서 diskIO
+                } else {
+                    repo.toggleDone(m.getId(), checked); // repo 내부에서 diskIO
+                }
+
+                // ✅ 조회를 콜백으로 받기
+                if (showingTrash) {
+                    repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                } else {
+                    repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                }
             }
             @Override public void onItemClick(Memo m) {
-                // 상세/편집 진입 등
-               /* MemoDialog dlg = MemoDialog.newInstance(m.text); // 기존 내용 채워서 열기
 
-                dlg.setListener(newText -> {
-                    if (newText.isEmpty() || newText.equals(m.text)) return; // 변경 없음/빈 값 무시
-                    //adapter.update(position, newText);   // 화면 갱신
-                    io.execute(() -> {
-                        repo.updateText(m.id, newText);
-                        //List<Memo> fresh = repo.activeMemo();
-                        //submitSafely(fresh); // 이미 UI 핸들러로 post됨
-                        List<Memo> fresh = showingTrash
-                                ? repo.softDeletedMemo()
-                                : repo.activeMemo();
-                        submitSafely(fresh);
-                    });
-
-                });
-                dlg.show(getSupportFragmentManager(), "memo_edit");*/
-                ArrayList<BlockMemo> initial = repo.loadBlocks(m.id);
-
-                // 2) 메모별로 고유 결과키 생성
+                // 1) 메모별 고유 결과키
                 String resultKey = "memo_result_" + m.id;
 
-                // 3) 결과 리스너(한 번만 받도록 등록)
-                getSupportFragmentManager().setFragmentResultListener(resultKey, MemoBase.this, (reqKey, bundle) -> {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<BlockMemo> blocks = (ArrayList<BlockMemo>) bundle.getSerializable("blocks");
-                    if (blocks == null) return;
+                // 2) 결과 리스너 등록 (중복 등록 방지용으로 먼저 clear 가능하면 더 좋음)
+                getSupportFragmentManager().setFragmentResultListener(
+                        resultKey,
+                        MemoBase.this,
+                        (reqKey, bundle) -> {
 
-                    io.execute(() -> {
-                        // 4) 블록 저장 (문자열 필드에 BLOCKS_JSON:...로 저장)
-                        repo.updateBlocks(m.id, blocks);
+                            @SuppressWarnings("unchecked")
+                            ArrayList<BlockMemo> blocks =
+                                    (ArrayList<BlockMemo>) bundle.getSerializable("blocks");
+                            if (blocks == null) return;
 
-                        List<Memo> fresh = showingTrash
-                                ? repo.softDeletedMemo()
-                                : repo.activeMemo();
-                        submitSafely(fresh);
-                    });
-                });
+                            // 3) 저장은 repo 내부 스레드에서 처리되게
+                            repo.updateBlocks(m.id, blocks, unused -> {
+                                // 4) 저장 끝나면 리스트 갱신
+                                refreshList();
+                            });
+                        }
+                );
 
-                // 5) 다이얼로그 띄우기 (결과키와 초기 블록 전달)
-                MemoBlockDialog
-                        .newInstance(initial, resultKey)   // ← resultKey를 같이 넘김
-                        .show(getSupportFragmentManager(), "memo_edit");
+                // 5) 초기 블록은 반드시 비동기로 불러온 뒤 Dialog 띄우기
+                repo.loadBlocks(m.id, initial -> runOnUiThread(() -> {
+                    MemoBlockDialog
+                            .newInstance(initial, resultKey)
+                            .show(getSupportFragmentManager(), "memo_edit");
+                }));
             }
+
 
             @Override public void onStartDrag(RecyclerView.ViewHolder holder) {
                 swipeHelperMode.startDrag(holder);
@@ -198,7 +186,8 @@ public class MemoBase extends MainActivity {
         rv.setAdapter(adapter);
         adapter.setTrashMode(false);
         //adapter.setItems(repo.activeMemo());
-        adapter.submitList(repo.activeMemo());
+        //adapter.submitList(repo.activeMemo());
+        refreshList();
 
 
 
@@ -214,16 +203,20 @@ public class MemoBase extends MainActivity {
             // 3) 결과 수신 리스너
             getSupportFragmentManager().setFragmentResultListener(
                     resultKey,
-                    MemoBase.this, // ← 액티비티(=LifecycleOwner)
+                    MemoBase.this,
                     (reqKey, bundle) -> {
                         @SuppressWarnings("unchecked")
-                        ArrayList<BlockMemo> blocks = (ArrayList<BlockMemo>) bundle.getSerializable("blocks");
-                        if (blocks == null ) return; // 완전 빈 내용은 저장 안 함
+                        ArrayList<BlockMemo> blocks =
+                                (ArrayList<BlockMemo>) bundle.getSerializable("blocks");
+                        if (blocks == null) return;
 
-                        io.execute(() -> {
-                            repo.addBlocks(blocks); // ← 블록 그대로 저장 (BLOCKS_JSON:... 형태)
-                            List<Memo> fresh = showingTrash ? repo.softDeletedMemo() : repo.activeMemo();
-                            submitSafely(fresh);
+                        // ✅ (선택) "진짜 빈 내용"이면 저장 안 함
+                        if (isBlocksEmpty(blocks)) return;
+
+                        // ✅ 저장은 repo가 비동기로 처리
+                        repo.addBlocks(blocks, unused -> {
+                            // 저장 완료 후 리스트 갱신
+                            refreshList();
                         });
                     }
             );
@@ -253,24 +246,26 @@ public class MemoBase extends MainActivity {
             showingTrash = !showingTrash;
             adapter.setTrashMode(showingTrash);
 
-            io.execute(() -> {
-                List<Memo> fresh = showingTrash
-                        ? repo.softDeletedMemo()
-                        : repo.activeMemo();
+            // ✅ 1) UI는 즉시 반영 (메인스레드)
+            ImageView icon = (ImageView) v;
+            int color = showingTrash
+                    ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
+                    : ContextCompat.getColor(this, android.R.color.black);
+            icon.setColorFilter(color);
 
-                runOnUiThread(() -> {
-                    // 🔴 휴지통 아이콘 색 전환
-                    ImageView icon = (ImageView) v;
-                    int color = showingTrash
-                            ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
-                            : ContextCompat.getColor(this, android.R.color.black);
-                    icon.setColorFilter(color);
-                    swipeHelperMode.attachToRecyclerView(null); // 기존 detach
-                    submitSafely(fresh);
-                    swipeHelperMode = setTouchHelper(showingTrash ? 2 : 1); // 새 helper 생성
-                    swipeHelperMode.attachToRecyclerView(rv);
-                });
-            });
+            // ✅ 2) 스와이프 헬퍼 교체도 즉시
+            if (swipeHelperMode != null) {
+                swipeHelperMode.attachToRecyclerView(null); // detach
+            }
+            swipeHelperMode = setTouchHelper(showingTrash ? 2 : 1);
+            swipeHelperMode.attachToRecyclerView(rv);
+
+            // ✅ 3) 데이터만 repo 콜백으로 갱신
+            if (showingTrash) {
+                repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+            } else {
+                repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+            }
         });
 
 
@@ -318,13 +313,12 @@ public class MemoBase extends MainActivity {
                     super.clearView(rv, vh);
                     if (dragTemp == null) return;
 
-                    // 최종 순서를 DiffUtil로 반영 (이때만 계산)
                     ArrayList<Memo> finalOrder = new ArrayList<>(dragTemp);
                     dragTemp = null;
-                    adapter.submitList(finalOrder);   // UI와 내부 currentList 동기화
 
-                    // 영구 저장
-                    io.execute(() -> repo.reorder(ids(finalOrder)));
+                    adapter.submitList(finalOrder);
+
+                    //repo.reorder(ids(finalOrder));
                 }
 
                 @Override public int getMovementFlags(@NonNull RecyclerView rv,
@@ -408,23 +402,19 @@ public class MemoBase extends MainActivity {
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton(inTrash ? "삭제" : "휴지통", (dialog, which) -> {
-                    io.execute(() -> {
-                        if (inTrash) {
-                            repo.hardDelete(id);
-                            Log.d("delete " , " test " ) ;
-                            submitSafely(repo.softDeletedMemo());
-                        } else {
-                            repo.softDelete(id);
-                            submitSafely(repo.activeMemo());
-                        }
-                    });
+
+                    if (inTrash) {
+                        // ✅ 영구 삭제
+                        repo.hardDelete(id, unused -> refreshList());
+                    } else {
+                        // ✅ 소프트 삭제(휴지통 이동)
+                        repo.softDelete(id, unused -> refreshList());
+                    }
                 })
                 .setNegativeButton("취소", (dialog, which) -> {
-                    // 스와이프 복원
                     adapter.notifyItemChanged(adapterPos);
                 })
                 .setOnCancelListener(d -> {
-                    // 바깥 터치/백키로 닫힌 경우도 복원
                     adapter.notifyItemChanged(adapterPos);
                 })
                 .show();
@@ -444,18 +434,16 @@ public class MemoBase extends MainActivity {
                 .setTitle("복구")
                 .setMessage("이 메모를 복구하시겠습니까?")
                 .setPositiveButton("복구", (dialog, which) -> {
-                    io.execute(() -> {
-                        repo.restore(id);                    // deletedAt=null
-                        submitSafely(repo.softDeletedMemo()); // 휴지통 목록 갱신 유지
-                    });
+                    // ✅ repo가 비동기로 처리, 완료 후 휴지통 목록 갱신
+                    repo.restore(id, unused -> refreshTrashList());
                 })
                 .setNegativeButton("취소", (dialog, which) -> {
                     int p = findAdapterPosById(id);
-                    if (p != RecyclerView.NO_POSITION) adapter.notifyItemChanged(p); // 체크 원복
+                    if (p != RecyclerView.NO_POSITION) adapter.notifyItemChanged(p);
                 })
                 .setOnCancelListener(d -> {
                     int p = findAdapterPosById(id);
-                    if (p != RecyclerView.NO_POSITION) adapter.notifyItemChanged(p); // 바깥터치/백키 시 원복
+                    if (p != RecyclerView.NO_POSITION) adapter.notifyItemChanged(p);
                 })
                 .show();
     }
@@ -529,6 +517,29 @@ public class MemoBase extends MainActivity {
         if (pendingSubmit != null) uiHandler.removeCallbacks(pendingSubmit);
         pendingSubmit = () -> adapter.submitList(new ArrayList<>(list));
         uiHandler.postDelayed(pendingSubmit, 200); // 100ms 이내 중복 호출 무시
+    }
+
+    //HELPER
+    private void refreshList() {
+        if (showingTrash) {
+            repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+        } else {
+            repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+        }
+    }
+
+    private void refreshTrashList() {
+        repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+    }
+
+    private boolean isBlocksEmpty(ArrayList<BlockMemo> blocks) {
+        if (blocks == null || blocks.isEmpty()) return true;
+
+        for (BlockMemo b : blocks) {
+            if (b == null) continue;
+            if (b.text != null && !b.text.trim().isEmpty()) return false;
+        }
+        return true;
     }
 
 }
