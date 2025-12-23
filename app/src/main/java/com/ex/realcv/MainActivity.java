@@ -33,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
         //full screen mode
         hideSystemBars();
 
-        출처: https://tekken5953.tistory.com/2 [개발새발 - IT 기술블로그:티스토리]
-
         if (OpenCVLoader.initLocal()) {
             Log.d("OpenCV", "OpenCV loaded (local)");
         } else {

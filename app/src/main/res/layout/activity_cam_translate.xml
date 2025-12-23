@@ -5,32 +5,154 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- 📸 화면 상단 절반: 카메라 프리뷰 -->
+
+    <!-- 캡쳐된 이미지 표시용 (처음엔 GONE) -->
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/ivCaptured"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/btnCapture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="캡처"
-        app:layout_constraintTop_toBottomOf="@id/previewView"
-        app:layout_constraintBottom_toTopOf="@+id/ivResult"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintVertical_bias="0.0" />
 
     <ImageView
-        android:id="@+id/ivResult"
+        android:id="@+id/ivCaptured"
+        android:layout_width="0dp"
+        android:layout_height="400dp"
+        android:background="#DDDDDD"
+        android:scaleType="centerCrop"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 📝 OCR 결과 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardOcrText"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scaleType="centerCrop"
-        app:layout_constraintTop_toBottomOf="@id/btnCapture"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:cardCornerRadius="12dp"
+        app:cardUseCompatPadding="true"
+        app:layout_constraintTop_toBottomOf="@id/ivCaptured"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/buttonPanel">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <TextView
+                android:id="@+id/tvOcrText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textSize="16sp"
+                android:textColor="#222222"
+                android:lineSpacingExtra="2dp"
+                android:text="OCR 결과가 여기에 표시됩니다." />
+        </ScrollView>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- 🌐 번역 결과 -->
+    <!--<androidx.cardview.widget.CardView
+        android:id="@+id/cardTranslatedText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginTop="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardUseCompatPadding="true"
+        app:layout_constraintTop_toBottomOf="@id/cardOcrText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/buttonPanel">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvTranslatedText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textSize="16sp"
+                android:textColor="#222222"
+                android:text="번역 결과가 여기에 표시됩니다."
+                android:lineSpacingExtra="2dp" />
+        </ScrollView>
+
+    </androidx.cardview.widget.CardView>-->
+
+    <!-- 🔘 아래 버튼 3개 -->
+    <LinearLayout
+        android:id="@+id/buttonPanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:baselineAligned="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/backToMain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="뒤로" />
+
+        <Button
+            android:id="@+id/btnCapture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="캡처"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
+
+        <Button
+            android:id="@+id/btnReset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="초기화"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- ⭐ 최상위 오버레이 ProgressBar -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#88000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="20dp">
+
+    <ProgressBar
+        android:id="@+id/progressOcr"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:padding="32dp"/>
+
+</FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
