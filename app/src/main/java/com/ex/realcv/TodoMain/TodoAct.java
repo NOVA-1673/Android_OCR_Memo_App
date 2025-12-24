@@ -45,7 +45,7 @@ public class TodoAct extends MainActivity {
 
         glView = findViewById(R.id.glView);
         //데이터 넘겨 주기
-        repo = new FileMemoRepository(getApplicationContext());
+        //repo = new FileMemoRepository(getApplicationContext());
         ExecutorService io = Executors.newSingleThreadExecutor();
 
 
