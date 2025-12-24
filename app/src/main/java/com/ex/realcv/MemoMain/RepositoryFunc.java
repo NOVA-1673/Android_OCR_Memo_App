@@ -1,13 +1,17 @@
 package com.ex.realcv.MemoMain;
 
+import com.ex.realcv.Func.ResultCall;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public interface RepositoryFunc {
 
     public interface Callback<T> {
-        void onResult(T data);
+        void onResult(ResultCall<T> result);
     }
+
+
     List<Memo> load();
     //void save(List<Memo> list);
     Memo add(String text);

@@ -50,4 +50,8 @@ public interface MemoDAO {
     @Query("SELECT * FROM memos ORDER BY updated_at DESC")
     List<MemoEntity> getAll();
 
+    //id로 검색
+    @Query("SELECT * FROM memos WHERE id = :id LIMIT 1")
+    MemoEntity getById(String id);
+
 }

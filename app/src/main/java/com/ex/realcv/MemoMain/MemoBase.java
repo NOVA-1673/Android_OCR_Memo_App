@@ -9,6 +9,7 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 
 
+import com.ex.realcv.Func.ResultCall;
 import com.ex.realcv.MainActivity;
 import com.ex.realcv.R;
 
@@ -40,6 +41,8 @@ import android.widget.ImageView;
 
 //아이콘 색 바꾸기
 import androidx.core.content.ContextCompat;
+
+import javax.xml.transform.Result;
 
 public class MemoBase extends MainActivity {
 
@@ -131,19 +134,43 @@ public class MemoBase extends MainActivity {
                 }
 
                 if (showingTrash) {
-                    repo.restore(m.getId(), unused -> {
-                        // 4) 저장 끝나면 리스트 갱신
-                        refreshList();
-                    });        // repo 내부에서 diskIO
+                    repo.restore(m.getId(), result -> {
+                        if(result instanceof ResultCall.SuccessCall){
+                            refreshList();
+                        } else if (result instanceof ResultCall.Error) {
+                            Throwable e = ((ResultCall.Error<?>) result).error;
+                            Log.e("restore", "failed", e);
+                            // 필요하면 토스트/다이얼로그
+                        }
+                    });      // repo 내부에서 diskIO
                 } else {
                     repo.toggleDone(m.getId(), checked); // repo 내부에서 diskIO
                 }
 
                 // ✅ 조회를 콜백으로 받기
                 if (showingTrash) {
-                    repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                    repo.softDeletedMemo(result -> runOnUiThread(() -> {
+                        if (result instanceof ResultCall.Success) {
+                            @SuppressWarnings("unchecked")
+                            List<Memo> fresh = ((ResultCall.Success<List<Memo>>) result).data;
+                            submitSafely(fresh);
+                        } else if (result instanceof ResultCall.Error) {
+                            Throwable e = ((ResultCall.Error<?>) result).error;
+                            Log.e("refreshList", "softDeletedMemo failed", e);
+                            // 필요하면 토스트/스낵바 등
+                        }
+                    }));
                 } else {
-                    repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                    repo.activeMemo(result -> runOnUiThread(() -> {
+                        if (result instanceof ResultCall.Success) {
+                            @SuppressWarnings("unchecked")
+                            List<Memo> fresh = ((ResultCall.Success<List<Memo>>) result).data;
+                            submitSafely(fresh);
+                        } else if (result instanceof ResultCall.Error) {
+                            Throwable e = ((ResultCall.Error<?>) result).error;
+                            Log.e("refreshList", "activeMemo failed", e);
+                        }
+                    }));
                 }
             }
             @Override public void onItemClick(Memo m) {
@@ -163,19 +190,53 @@ public class MemoBase extends MainActivity {
                             if (blocks == null) return;
 
                             // 3) 저장은 repo 내부 스레드에서 처리되게
-                            repo.updateBlocks(m.id, blocks, unused -> {
+                            /*repo.updateBlocks(m.id, blocks, unused -> {
                                 // 4) 저장 끝나면 리스트 갱신
                                 refreshList();
-                            });
+                            });*/
+                            repo.updateBlocks(m.id, blocks, result -> runOnUiThread(() -> {
+                                if (result instanceof ResultCall.SuccessCall) {
+                                    refreshList();
+                                }
+                            }));
                         }
                 );
 
                 // 5) 초기 블록은 반드시 비동기로 불러온 뒤 Dialog 띄우기
-                repo.loadBlocks(m.id, initial -> runOnUiThread(() -> {
+                /*repo.loadBlocks(m.id, initial -> runOnUiThread(() -> {
                     MemoBlockDialog
                             .newInstance(initial, resultKey)
                             .show(getSupportFragmentManager(), "memo_edit");
-                }));
+                }));*/
+                repo.loadBlocks(m.id, result -> {
+                    if (result instanceof ResultCall.Success) {
+                        @SuppressWarnings("unchecked")
+                        ArrayList<BlockMemo> initial =
+                                ((ResultCall.Success<ArrayList<BlockMemo>>) result).data;
+
+                        runOnUiThread(() -> {
+                            MemoBlockDialog
+                                    .newInstance(initial, resultKey)
+                                    .show(getSupportFragmentManager(), "memo_edit");
+                        });
+
+                    } /*else if (result instanceof ResultCall.Error) {
+                        Throwable e = ((ResultCall.Error<?>) result).error;
+                        Log.e("loadBlocks", "fail", e);
+
+                        // 실패 시에도 빈 화면으로 열고 싶다면(선택):
+                        runOnUiThread(() -> {
+                            ArrayList<BlockMemo> fallback = new ArrayList<>();
+                            fallback.add(BlockMemo.para(""));
+                            MemoBlockDialog
+                                    .newInstance(fallback, resultKey)
+                                    .show(getSupportFragmentManager(), "memo_edit");
+                        });
+                    }*/
+                });
+
+
+
             }
 
 
@@ -183,6 +244,7 @@ public class MemoBase extends MainActivity {
                 swipeHelperMode.startDrag(holder);
             }
         });
+
         rv.setAdapter(adapter);
         adapter.setTrashMode(false);
         //adapter.setItems(repo.activeMemo());
@@ -214,9 +276,14 @@ public class MemoBase extends MainActivity {
                         if (isBlocksEmpty(blocks)) return;
 
                         // ✅ 저장은 repo가 비동기로 처리
-                        repo.addBlocks(blocks, unused -> {
-                            // 저장 완료 후 리스트 갱신
-                            refreshList();
+                        repo.addBlocks(blocks, result -> {
+
+                            if(result instanceof ResultCall.SuccessCall)
+                            {
+                                // 저장 완료 후 리스트 갱신
+                                refreshList();
+                            }
+
                         });
                     }
             );
@@ -262,9 +329,11 @@ public class MemoBase extends MainActivity {
 
             // ✅ 3) 데이터만 repo 콜백으로 갱신
             if (showingTrash) {
-                repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                repo.softDeletedMemo(result ->
+                        runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
             } else {
-                repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+                repo.activeMemo(result ->
+                        runOnUiThread(() -> submitResult(result, "activeMemo")));
             }
         });
 
@@ -282,13 +351,14 @@ public class MemoBase extends MainActivity {
     private ItemTouchHelper setTouchHelper(int type){
 
         if(type == 1){
+
             //active
             return new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
                     ItemTouchHelper.UP | ItemTouchHelper.DOWN,
                     ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
 
                 @Override public boolean isLongPressDragEnabled() { return false; }
-                @Override public boolean isItemViewSwipeEnabled() { return false; }
+                @Override public boolean isItemViewSwipeEnabled() { return true; }
 
                 @Override public boolean onMove(@NonNull RecyclerView rv,
                                                 @NonNull RecyclerView.ViewHolder vh,
@@ -327,24 +397,19 @@ public class MemoBase extends MainActivity {
                     if (pos == RecyclerView.NO_POSITION) return 0;
 
                     Memo item = adapter.itemAt(pos);
-                   /* boolean canSwipe = (item != null && item.isDone());
-                    return makeMovementFlags(0, canSwipe
-                            ? (ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
-                            : 0);*/
-                    final int drag = (type == 1) ? (ItemTouchHelper.UP | ItemTouchHelper.DOWN) : 0;
-                    final int swipe = (type == 1) ? (ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) : 0;
-                    return makeMovementFlags(drag, swipe);
-                   }
-               /* @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
-                    int pos = vh.getBindingAdapterPosition();
-                    if (pos == RecyclerView.NO_POSITION) return;
-                    Memo m = adapter.getCurrentList().get(pos);
 
-                    io.execute(() -> {
-                        repo.softDelete(m.getId());          // 소프트 삭제
-                        submitSafely(repo.activeMemo());     // UI 갱신
-                    });
-                }*/
+                    int dragFlags = 0;
+                    int swipeFlags = 0;
+
+                    if (type == 1) { // 일반 모드
+                        dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+                        swipeFlags = ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
+                    } else if (type == 2) { // 휴지통 모드
+                        dragFlags = 0;
+                        swipeFlags = ItemTouchHelper.LEFT; // 예: 왼쪽만
+                    }
+                    return makeMovementFlags(dragFlags, swipeFlags);
+                   }
 
                 @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
                     final int pos = vh.getBindingAdapterPosition();
@@ -435,7 +500,14 @@ public class MemoBase extends MainActivity {
                 .setMessage("이 메모를 복구하시겠습니까?")
                 .setPositiveButton("복구", (dialog, which) -> {
                     // ✅ repo가 비동기로 처리, 완료 후 휴지통 목록 갱신
-                    repo.restore(id, unused -> refreshTrashList());
+                    repo.restore(id, result -> {
+                        if (result instanceof ResultCall.SuccessCall) {
+                            refreshList();
+                        } else if (result instanceof ResultCall.Error) {
+                            ResultCall.Error<?> err = (ResultCall.Error<?>) result;
+                            Log.e("restore", "fail", err.error);
+                        }
+                    });
                 })
                 .setNegativeButton("취소", (dialog, which) -> {
                     int p = findAdapterPosById(id);
@@ -447,40 +519,6 @@ public class MemoBase extends MainActivity {
                 })
                 .show();
     }
-    ///////0ld
-    // 스와이프로 삭제
-  /*  ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, 0) {
-
-        @Override public boolean onMove(RecyclerView rv, RecyclerView.ViewHolder vh, RecyclerView.ViewHolder t) {
-            return false;
-        }
-
-        // 항목별로 스와이프 가능/불가능을 결정
-        public int getMovementFlags(@NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh) {
-            int pos = vh.getBindingAdapterPosition();
-            if (pos == RecyclerView.NO_POSITION) return 0;
-
-            // ✅ ListAdapter에는 getItem(pos)가 이미 내장되어 있음
-            Memo item = adapter.itemAt(pos);
-            boolean canSwipe = (item != null && item.done);
-
-            int swipeFlags = canSwipe ? (ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) : 0;
-            return makeMovementFlags(0, swipeFlags);
-        }
-
-        @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
-            //adapter.remove(vh.getBindingAdapterPosition());
-            Memo m = adapter.getCurrentList().get(vh.getBindingAdapterPosition());
-            io.execute(() -> {
-                repo.softDelete(m.getId());
-                List<Memo> fresh = repo.activeMemo();
-                runOnUiThread(() -> submitSafely(fresh));
-            });
-        }
-
-        // (선택) 스와이프 임계값을 좀 더 빡세게
-        // @Override public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) { return 0.5f; }
-    });*/
 
     private List<String> ids(List<Memo> list) {
         ArrayList<String> out = new ArrayList<>(list.size());
@@ -522,14 +560,18 @@ public class MemoBase extends MainActivity {
     //HELPER
     private void refreshList() {
         if (showingTrash) {
-            repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+            repo.softDeletedMemo(result ->
+                    runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
         } else {
-            repo.activeMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+            repo.activeMemo(result ->
+                    runOnUiThread(() -> submitResult(result, "activeMemo")));
         }
     }
 
     private void refreshTrashList() {
-        repo.softDeletedMemo(fresh -> runOnUiThread(() -> submitSafely(fresh)));
+        Log.d("trash", "refreshTrashList()");
+        repo.softDeletedMemo(result ->
+                runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
     }
 
     private boolean isBlocksEmpty(ArrayList<BlockMemo> blocks) {
@@ -540,6 +582,20 @@ public class MemoBase extends MainActivity {
             if (b.text != null && !b.text.trim().isEmpty()) return false;
         }
         return true;
+    }
+
+    private void submitResult(ResultCall<List<Memo>> result, String tag) {
+        if (result instanceof ResultCall.Success) {
+            @SuppressWarnings("unchecked")
+            List<Memo> fresh =
+                    ((ResultCall.Success<List<Memo>>) result).data;
+            submitSafely(fresh);
+
+        } else if (result instanceof ResultCall.Error) {
+            Throwable e = ((ResultCall.Error<?>) result).error;
+            Log.e(tag, "load failed", e);
+            // 필요 시 Toast / Snackbar
+        }
     }
 
 }
