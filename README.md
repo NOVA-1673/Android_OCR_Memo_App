@@ -3,7 +3,7 @@
 feature Readme
 
 - 🇯🇵 일본어 학습 액티비티 기획  
-  → [feat-3 브랜치 README 보기](feat-3/README.md)
+  → [feat-3 브랜치 README 보기](/feat-3/wordCard/feat-3/README.md)
 
 ### 🚀 주요 기능
 
