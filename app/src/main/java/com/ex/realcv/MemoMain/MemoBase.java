@@ -50,6 +50,7 @@ public class MemoBase extends MainActivity {
     private MemoAdapter adapter;
     private RecyclerView rv;
     private BlocksAdapter BlockAdapter;
+    private FloatingActionButton fab;
 
     private RepositoryFunc repo;
     private RoomMemoRepository RoomRepo;
@@ -72,27 +73,44 @@ public class MemoBase extends MainActivity {
     private ArrayList<Memo> dragTemp;
     private boolean showingTrash  =false;
 
-
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.memo_main);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
+        initViews();
+        initRepo();
+        initRecycler();
+        initAdapter();
+        initFab();
+        initNavigation();
+        initTrashToggle();
+
+        refreshList();
+
+    }
+
+
+    private void initViews() {
         rv = findViewById(R.id.rvMemo);
+    }
+
+    private void initRepo() {
+        repo = new RoomMemoRepository(getApplicationContext());
+        // repo = new FileMemoRepository(getApplicationContext());
+    }
+
+    private void initRecycler() {
         LinearLayoutManager lm = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         lm.setReverseLayout(false);
         lm.setStackFromEnd(false);
         rv.setLayoutManager(lm);
 
-        //저장소
-        //repo = new FileMemoRepository(getApplicationContext());
-        repo = new RoomMemoRepository((getApplicationContext()));
-
-        //스와이프 삭제 초기 설정
         swipeHelperMode = setTouchHelper(1);
         swipeHelperMode.attachToRecyclerView(rv);
+    }
 
-
+    private void initAdapter() {
         adapter = new MemoAdapter(new MemoAdapter.Listener() {
             @Override public void onToggleDone(Memo m, boolean checked) {
                 if (showingTrash) {
@@ -197,13 +215,10 @@ public class MemoBase extends MainActivity {
 
         rv.setAdapter(adapter);
         adapter.setTrashMode(false);
-        //adapter.setItems(repo.activeMemo());
-        //adapter.submitList(repo.activeMemo());
-        refreshList();
+    }
 
-
-
-        FloatingActionButton fab = findViewById(R.id.fabAdd);
+    private void initFab() {
+        fab = findViewById(R.id.fabAdd);
         fab.setOnClickListener(v -> {
             // 1) 초기 빈 블록
             ArrayList<BlockMemo> initial = new ArrayList<>();
@@ -244,12 +259,9 @@ public class MemoBase extends MainActivity {
             MemoBlockDialog.newInstance(initial, resultKey)
                     .show(getSupportFragmentManager(), "memo_new");
         });
+    }
 
-
-
-
-        ///////menu
-        //Log.d("ccccc", "cccccc");
+    private void initNavigation() {
         // 일반 메뉴로 이동
         findViewById(R.id.ChangeDomain).setOnClickListener(v -> {
             startActivity(new Intent(this, TodoAct.class));
@@ -258,42 +270,57 @@ public class MemoBase extends MainActivity {
         findViewById(R.id.BackToMain).setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
         });
-        
-        //휴지통 관련
-
-        findViewById(R.id.ChangeLayer).setOnClickListener(v -> {
-            showingTrash = !showingTrash;
-            adapter.setTrashMode(showingTrash);
-
-            // ✅ 1) UI는 즉시 반영 (메인스레드)
-            ImageView icon = (ImageView) v;
-            int color = showingTrash
-                    ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
-                    : ContextCompat.getColor(this, android.R.color.black);
-            icon.setColorFilter(color);
-
-            // ✅ 2) 스와이프 헬퍼 교체도 즉시
-            if (swipeHelperMode != null) {
-                swipeHelperMode.attachToRecyclerView(null); // detach
-            }
-            swipeHelperMode = setTouchHelper(showingTrash ? 2 : 1);
-            swipeHelperMode.attachToRecyclerView(rv);
-
-            // ✅ 3) 데이터만 repo 콜백으로 갱신
-            if (showingTrash) {
-                repo.softDeletedMemo(result ->
-                        runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
-            } else {
-                repo.activeMemo(result ->
-                        runOnUiThread(() -> submitResult(result, "activeMemo")));
-            }
-        });
-
-
-        // 저장된 목록 불러오기
-        //adapter.setItems(repo.load());
 
     }
+
+    private void initTrashToggle() {
+        findViewById(R.id.ChangeLayer).setOnClickListener(v -> toggleTrashMode((ImageView) v));
+    }
+
+    private void toggleTrashMode(ImageView icon) {
+        showingTrash = !showingTrash;
+        adapter.setTrashMode(showingTrash);
+
+        int color = showingTrash
+                ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
+                : ContextCompat.getColor(this, android.R.color.black);
+        icon.setColorFilter(color);
+
+        if (swipeHelperMode != null) swipeHelperMode.attachToRecyclerView(null);
+        swipeHelperMode = setTouchHelper(showingTrash ? 2 : 1);
+        swipeHelperMode.attachToRecyclerView(rv);
+
+        refreshList();
+    }
+
+   /* findViewById(R.id.ChangeLayer).setOnClickListener(v -> {
+        showingTrash = !showingTrash;
+        adapter.setTrashMode(showingTrash);
+
+        // ✅ 1) UI는 즉시 반영 (메인스레드)
+        ImageView icon = (ImageView) v;
+        int color = showingTrash
+                ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
+                : ContextCompat.getColor(this, android.R.color.black);
+        icon.setColorFilter(color);
+
+        // ✅ 2) 스와이프 헬퍼 교체도 즉시
+        if (swipeHelperMode != null) {
+            swipeHelperMode.attachToRecyclerView(null); // detach
+        }
+        swipeHelperMode = setTouchHelper(showingTrash ? 2 : 1);
+        swipeHelperMode.attachToRecyclerView(rv);
+
+        // ✅ 3) 데이터만 repo 콜백으로 갱신
+        if (showingTrash) {
+            repo.softDeletedMemo(result ->
+                    runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
+        } else {
+            repo.activeMemo(result ->
+                    runOnUiThread(() -> submitResult(result, "activeMemo")));
+        }
+    });*/
+
 
     // 드래그 시작 전에 현재 리스트를 복사
     private void ensureDragTemp() {
