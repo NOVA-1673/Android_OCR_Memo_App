@@ -46,27 +46,9 @@ import javax.xml.transform.Result;
 
 public class MemoBase extends MainActivity {
 
-    // 특정 메모 핀 기능
-    // 시크릿 모드 메모
-    // 다크 모드
-    // 예쁜 글씨체
-    // 글씨 에디팅 -
-    //메모 곂쳐지면 폴더 
-    // 캐치 & 릴리즈로 메모의 문장을 (메모장 안에서 체크리스트끼리의 순서를 바꿀수있게)
-    //휴지통
-    // 메모 템플릿
-    // 메모 폴더
-    // 검색 기능 제목 내용 다 되게 & 파일이 들어간 메모만 검색도 가능하게
-    // 메모 속에 pdf나 파일 upload를 통해 관련 데이터 관리 가능하게
-        //-> 관련된 웹, 파일 바로 연결 가능하게
-    //배경 꾸밀수있게
-    //백업 -> sns 계정
-    //고양
-    //메모 바로가기 위젯
-
-
 
     private MemoAdapter adapter;
+    private RecyclerView rv;
     private BlocksAdapter BlockAdapter;
 
     private RepositoryFunc repo;
@@ -91,18 +73,12 @@ public class MemoBase extends MainActivity {
     private boolean showingTrash  =false;
 
 
-    private final ExecutorService io = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r);
-        t.setName("Memo-IO");   // ← 로그에서 보이도록 이름 설정
-        return t;
-    });
-    //private final ExecutorService io = Executors.newSingleThreadExecutor();
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.memo_main);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
-        RecyclerView rv = findViewById(R.id.rvMemo);
+        rv = findViewById(R.id.rvMemo);
         LinearLayoutManager lm = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         lm.setReverseLayout(false);
         lm.setStackFromEnd(false);
@@ -116,33 +92,12 @@ public class MemoBase extends MainActivity {
         swipeHelperMode = setTouchHelper(1);
         swipeHelperMode.attachToRecyclerView(rv);
 
-        //어답터 세팅
-        //adapter = new MemoAdapter(list -> repo.save(list));
-       /* adapter = new MemoAdapter(list -> {
-           *//* Log.d(TAG, "onChanged() called on thread=" + Thread.currentThread().getName()
-                    + " | scheduling save(size=" + list.size() + ")");*//*
-            io.execute(() -> {
-              *//*  Log.d(TAG, "save runnable running on thread=" + Thread.currentThread().getName());*//*
-                repo.save(list);
-            });
-        });*/
+
         adapter = new MemoAdapter(new MemoAdapter.Listener() {
             @Override public void onToggleDone(Memo m, boolean checked) {
                 if (showingTrash) {
                     showRestoreConfirmDialog(MemoBase.this, m.getId());
                     return;
-                }
-
-                if (showingTrash) {
-                    repo.restore(m.getId(), result -> {
-                        if(result instanceof ResultCall.SuccessCall){
-                            refreshList();
-                        } else if (result instanceof ResultCall.Error) {
-                            Throwable e = ((ResultCall.Error<?>) result).error;
-                            Log.e("restore", "failed", e);
-                            // 필요하면 토스트/다이얼로그
-                        }
-                    });      // repo 내부에서 diskIO
                 } else {
                     repo.toggleDone(m.getId(), checked); // repo 내부에서 diskIO
                 }
@@ -155,8 +110,8 @@ public class MemoBase extends MainActivity {
                             List<Memo> fresh = ((ResultCall.Success<List<Memo>>) result).data;
                             submitSafely(fresh);
                         } else if (result instanceof ResultCall.Error) {
-                            Throwable e = ((ResultCall.Error<?>) result).error;
-                            Log.e("refreshList", "softDeletedMemo failed", e);
+                            Throwable e = ResultCall.getError(result);
+                            Log.e("MemoBase Error", "softDeleteMemo error : ", e);
                             // 필요하면 토스트/스낵바 등
                         }
                     }));
@@ -167,8 +122,9 @@ public class MemoBase extends MainActivity {
                             List<Memo> fresh = ((ResultCall.Success<List<Memo>>) result).data;
                             submitSafely(fresh);
                         } else if (result instanceof ResultCall.Error) {
-                            Throwable e = ((ResultCall.Error<?>) result).error;
-                            Log.e("refreshList", "activeMemo failed", e);
+                            Throwable e = ResultCall.getError(result);
+                            Log.e("MemoBase Error", "activeMemo error : ", e);
+
                         }
                     }));
                 }
@@ -202,12 +158,6 @@ public class MemoBase extends MainActivity {
                         }
                 );
 
-                // 5) 초기 블록은 반드시 비동기로 불러온 뒤 Dialog 띄우기
-                /*repo.loadBlocks(m.id, initial -> runOnUiThread(() -> {
-                    MemoBlockDialog
-                            .newInstance(initial, resultKey)
-                            .show(getSupportFragmentManager(), "memo_edit");
-                }));*/
                 repo.loadBlocks(m.id, result -> {
                     if (result instanceof ResultCall.Success) {
                         @SuppressWarnings("unchecked")
@@ -282,8 +232,10 @@ public class MemoBase extends MainActivity {
                             {
                                 // 저장 완료 후 리스트 갱신
                                 refreshList();
+                            }else if (result instanceof ResultCall.Error) {
+                                Throwable e = ResultCall.getError(result);
+                                Log.e("MemoBase Error", "addBlock error : ", e);
                             }
-
                         });
                     }
             );
@@ -470,10 +422,28 @@ public class MemoBase extends MainActivity {
 
                     if (inTrash) {
                         // ✅ 영구 삭제
-                        repo.hardDelete(id, unused -> refreshList());
+                        repo.hardDelete(id, result -> {
+                            if(result instanceof ResultCall.SuccessCall){
+                                refreshList();
+                            }else if (result instanceof ResultCall.Error) {
+                                Throwable e = ResultCall.getError(result);
+                                Log.d("MemoBase", "hardDelete Error occur", e);
+
+                            }
+                        });
                     } else {
                         // ✅ 소프트 삭제(휴지통 이동)
                         repo.softDelete(id, unused -> refreshList());
+
+                        repo.softDelete(id, result -> {
+                            if(result instanceof ResultCall.SuccessCall){
+                                refreshList();
+                            }else if (result instanceof ResultCall.Error) {
+                                Throwable e = ResultCall.getError(result);
+                                Log.d("MemoBase", "softDelete Error occur", e);
+                            }
+                        });
+
                     }
                 })
                 .setNegativeButton("취소", (dialog, which) -> {
@@ -504,8 +474,8 @@ public class MemoBase extends MainActivity {
                         if (result instanceof ResultCall.SuccessCall) {
                             refreshList();
                         } else if (result instanceof ResultCall.Error) {
-                            ResultCall.Error<?> err = (ResultCall.Error<?>) result;
-                            Log.e("restore", "fail", err.error);
+                            Throwable e = ResultCall.getError(result);
+                            Log.d("MemoBase", "restore Error occur", e);
                         }
                     });
                 })
@@ -546,25 +516,26 @@ public class MemoBase extends MainActivity {
 
     }
 
-    @Override protected void onDestroy() {
-        super.onDestroy();
-        io.shutdown(); // 누수 방지
-    }
-
     private void submitSafely(List<Memo> list) {
+        if (isFinishing() || isDestroyed()) return;
         if (pendingSubmit != null) uiHandler.removeCallbacks(pendingSubmit);
         pendingSubmit = () -> adapter.submitList(new ArrayList<>(list));
-        uiHandler.postDelayed(pendingSubmit, 200); // 100ms 이내 중복 호출 무시
+        uiHandler.post(pendingSubmit); // 100ms 이내 중복 호출 무시
     }
 
     //HELPER
     private void refreshList() {
         if (showingTrash) {
-            repo.softDeletedMemo(result ->
-                    runOnUiThread(() -> submitResult(result, "softDeletedMemo")));
+            repo.softDeletedMemo(result -> {
+                if (isFinishing() || isDestroyed()) return;
+                runOnUiThread(() -> submitResult(result, "softDeletedMemo"));
+            });
         } else {
-            repo.activeMemo(result ->
-                    runOnUiThread(() -> submitResult(result, "activeMemo")));
+            repo.activeMemo(result ->{
+                if (isFinishing() || isDestroyed()) return;
+                runOnUiThread(() -> submitResult(result, "activeMemo"));
+                }
+            );
         }
     }
 
@@ -592,10 +563,22 @@ public class MemoBase extends MainActivity {
             submitSafely(fresh);
 
         } else if (result instanceof ResultCall.Error) {
-            Throwable e = ((ResultCall.Error<?>) result).error;
+            Throwable e = ResultCall.getError(result);
             Log.e(tag, "load failed", e);
             // 필요 시 Toast / Snackbar
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        if (pendingSubmit != null) uiHandler.removeCallbacks(pendingSubmit);
+        pendingSubmit = null;
+
+        rv.setAdapter(null);                  // (선택) adapter가 Activity 캡처할 때 도움
+        swipeHelperMode.attachToRecyclerView(null); // (선택) 터치헬퍼 해제
+
+        super.onDestroy();
     }
 
 }

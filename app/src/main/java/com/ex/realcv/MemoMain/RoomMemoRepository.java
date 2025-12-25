@@ -85,15 +85,28 @@ public class RoomMemoRepository  implements RepositoryFunc {
     // ---------- 소프트 삭제/복원 ----------
     public void softDelete(String id, Callback<Void> cb){
         long ts = System.currentTimeMillis();
-        diskIO.execute(() -> {
-            dao.softDelete(id,ts);
-        });
+
+        try{
+            diskIO.execute(() -> {
+                dao.softDelete(id,ts);
+                cb.onResult(ResultCall.SuccessCall.INSTANCE);
+            });
+        }catch (Exception e){
+            cb.onResult(new ResultCall.Error<>(e));
+        }
+
     }
 
     public void hardDelete(String id, Callback<Void> cb){
-        diskIO.execute(() -> {
-            dao.deleteById(id);
-        });
+        try{
+            diskIO.execute(() -> {
+                dao.deleteById(id);
+                cb.onResult(ResultCall.SuccessCall.INSTANCE);
+            });
+        }catch (Exception e){
+            cb.onResult(new ResultCall.Error<>(e));
+        }
+
     }
 
     public void restore(String id , Callback<Void> cb){
