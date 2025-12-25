@@ -1,6 +1,12 @@
 package com.ex.realcv.Func;
 
 public interface ResultCall<T> {
+
+    static Throwable getError(ResultCall<?> r) {
+        return (r instanceof Error)
+                ? ((Error<?>) r).error
+                : null;
+    }
     final class Success<T> implements ResultCall<T> {
         public final T data;
         public Success(T data) { this.data = data; }
