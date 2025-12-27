@@ -29,6 +29,7 @@
             android:windowSoftInputMode="stateUnchanged|adjustResize"/>
 
         <activity android:name=".Camera.CameraMain"/>
+        <activity android:name=".WordCard.CardBase"/>
     </application>
 
     <!--Permissions -->

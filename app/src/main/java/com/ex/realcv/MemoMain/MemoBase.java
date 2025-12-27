@@ -268,7 +268,7 @@ public class MemoBase extends MainActivity {
         });
 
         findViewById(R.id.BackToMain).setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
+            finish();
         });
 
     }

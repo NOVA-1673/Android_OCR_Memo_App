@@ -109,7 +109,7 @@ public class CameraMain extends MainActivity {
         }
 
         backToMainBtn.setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
+            finish();
         });
 
         btnCapture.setOnClickListener(v -> {
