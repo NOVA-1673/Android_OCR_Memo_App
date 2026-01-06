@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="56dp"
-        android:text="@string/get_start"
+        android:text="Memo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.505"
@@ -32,8 +32,8 @@
 
     <Button
         android:id="@+id/btnCapture"
-        android:layout_width="104dp"
-        android:layout_height="52dp"
+        android:layout_width="118dp"
+        android:layout_height="51dp"
         android:layout_marginBottom="48dp"
         android:text="Capture"
         app:layout_constraintBottom_toTopOf="@+id/btnGetStart"

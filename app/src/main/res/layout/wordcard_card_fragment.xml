@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootWordCardFrag"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp">
+
+    <!-- 카드(문장/단어 + 해석 토글) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardMain"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="2dp"
+        app:strokeColor="#8A8A8A"
+        app:cardBackgroundColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.55">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/cardContainer"
+            android:padding="18dp">
+
+            <!-- 일본어 문장 -->
+            <TextView
+                android:id="@+id/tvJapanese"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="25sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- 해석/문법 설명(토글 영역) -->
+            <TextView
+                android:id="@+id/tvExplain"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="12dp"
+                android:text=""
+                android:textSize="14sp"
+                android:textColor="#444444"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/tvJapanese"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/btnTts"
+                app:layout_constraintHeight_default="spread"/>
+
+            <!-- 발음 듣기 버튼(카드 내부 우하단) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTts"
+                android:layout_width="104dp"
+                android:layout_height="36dp"
+                android:text="발음 듣기"
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                android:textSize="13sp"
+                app:backgroundTint="@android:color/white"
+                app:cornerRadius="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:strokeColor="#8A8A8A"
+                app:strokeWidth="2dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 좌/우 스와이프 힌트 (선택) -->
+    <TextView
+        android:id="@+id/tvHintLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← 어려움 (다시 보기)"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        app:layout_constraintTop_toBottomOf="@id/cardMain"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tvHintRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이해함 (빈도↓) →"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        app:layout_constraintTop_toBottomOf="@id/cardMain"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <!-- 손글씨 영역 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardHandwriting"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="2dp"
+        app:strokeColor="#8A8A8A"
+        app:cardBackgroundColor="@android:color/white"
+        app:layout_constraintTop_toBottomOf="@id/tvHintLeft"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- MVP: 일단 안내 텍스트 -->
+        <!-- 나중에 여기 자리에 커스텀 View(손글씨 캔버스) 붙이면 됨 -->
+        <TextView
+            android:id="@+id/tvHandwritingGuide"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="여기 손가락으로 가볍게 글자 써볼 수 있는 칸\n(인식/채점 없음)"
+            android:gravity="center"
+            android:textSize="14sp"
+            android:textColor="#444444"/>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

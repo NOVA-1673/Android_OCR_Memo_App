@@ -263,9 +263,9 @@ public class MemoBase extends MainActivity {
 
     private void initNavigation() {
         // 일반 메뉴로 이동
-        findViewById(R.id.ChangeDomain).setOnClickListener(v -> {
+        /*findViewById(R.id.ChangeDomain).setOnClickListener(v -> {
             startActivity(new Intent(this, TodoAct.class));
-        });
+        });*/
 
         findViewById(R.id.BackToMain).setOnClickListener(v -> {
             finish();
