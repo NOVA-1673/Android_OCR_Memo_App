@@ -5,7 +5,7 @@ feature Readme
 - 🇯🇵 일본어 학습 액티비티 기획  
   → [feat-3 브랜치 README 보기](../../tree/feat-3/wordCard/feat-3/README.md)
 
-### 🚀 주요 기능
+### 주요 기능
 
 #### 1. 카메라 
     CameraX 기반 사진 촬영
@@ -21,7 +21,7 @@ feature Readme
     내부 edit박스에서 체크박스 구현
 
 
-## 🚀 기술 목표
+## 기술 목표
 
 추후 추가 예정:
     
@@ -35,7 +35,7 @@ feature Readme
     일본어 회화 학습을 위한 단어 카드 추가 -> 단순 메모 앱에서 직접 일본어 학습을 위한 앱으로 발전
     -> 이유 : 일본어 학습 시 여러 앱을 받아보고 도움이 되는 앱이 없어 주로 사용하는 언어 학습방법을 적용한 앱 개발하려함함
 
-### 🧱 기능 개요 (Features)
+### 기능 개요 (Features)
 ### 1️⃣ Room DB 전환 — 로컬 DB 기반 아키텍처
 
     기존 JSON 파일 저장 방식을 제거하고 Room Database 기반으로 전환
